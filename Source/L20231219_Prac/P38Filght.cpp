@@ -10,7 +10,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
-
+#include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
+#include "InputactionValue.h"
 #include "Rocket.h"
 
 // Sets default values
@@ -90,35 +92,68 @@ void AP38Filght::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	//입력받기
-	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &AP38Filght::Fire);
-	PlayerInputComponent->BindAxis(TEXT("Pitch"), this, &AP38Filght::Pitch);
-	PlayerInputComponent->BindAxis(TEXT("Roll"), this, &AP38Filght::Roll);
-}
+	//입력받기(구버전)
+//	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &AP38Filght::Fire);
+//	PlayerInputComponent->BindAxis(TEXT("Pitch"), this, &AP38Filght::Pitch);
+//	PlayerInputComponent->BindAxis(TEXT("Roll"), this, &AP38Filght::Roll);
 
-void AP38Filght::Fire()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Fire"));
-	//로켓스폰
-	FVector Location = Arrow->GetComponentLocation();
-	FRotator Rotation = Arrow->GetComponentRotation();
-	ARocket* Rocket = GetWorld()->SpawnActor<ARocket>(Location, Rotation);
-	
-}
-
-void AP38Filght::Pitch(float Value)
-{
-	if (Value != 0)
+	//입력받기(신버전)
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent);
+	if (EIC && FireAction && Pitch_RollAction)
 	{
-		AddActorLocalRotation(FRotator(Value * 50 * GetWorld()->DeltaTimeSeconds, 0, 0));
+		EIC->BindAction(FireAction, ETriggerEvent::Triggered, this, &AP38Filght::Fire);
+		EIC->BindAction(Pitch_RollAction, ETriggerEvent::Triggered, this, &AP38Filght::Pitch_Roll);
 	}
 }
 
-void AP38Filght::Roll(float Value)
+void AP38Filght::Fire(const FInputActionValue& Value)
 {
-	if (Value != 0)
+	if (RocketTemplate)
 	{
-		AddActorLocalRotation(FRotator(0, 0, Value * 50 * GetWorld()->DeltaTimeSeconds));
+		//로켓스폰
+		FVector Location = Arrow->GetComponentLocation();
+		FRotator Rotation = Arrow->GetComponentRotation();
+		ARocket* Rocket = GetWorld()->SpawnActor<ARocket>(RocketTemplate, Location, Rotation);
 	}
 }
+
+void AP38Filght::Pitch_Roll(const FInputActionValue& Value)
+{
+	// delta time을 곱해줘야 프레임에 따라 속도가 달라지지 않는다.
+	FVector2D RotationValue = Value.Get<FVector2D>();
+	// 60프레임으로 고정
+	if (!RotationValue.IsZero())
+	{
+		RotationValue = RotationValue * UGameplayStatics::GetWorldDeltaSeconds(GetWorld()) * 60.0f;
+
+		AddActorLocalRotation(FRotator(RotationValue.Y, 0, RotationValue.X));
+
+	}
+}
+
+//void AP38Filght::Fire()
+//{
+//	UE_LOG(LogTemp, Warning, TEXT("Fire"));
+//	//로켓스폰
+//	FVector Location = Arrow->GetComponentLocation();
+//	FRotator Rotation = Arrow->GetComponentRotation();
+//	ARocket* Rocket = GetWorld()->SpawnActor<ARocket>(Location, Rotation);
+//	
+//}
+//
+//void AP38Filght::Pitch(float Value)
+//{
+//	if (Value != 0)
+//	{
+//		AddActorLocalRotation(FRotator(Value * 50 * GetWorld()->DeltaTimeSeconds, 0, 0));
+//	}
+//}
+//
+//void AP38Filght::Roll(float Value)
+//{
+//	if (Value != 0)
+//	{
+//		AddActorLocalRotation(FRotator(0, 0, Value * 50 * GetWorld()->DeltaTimeSeconds));
+//	}
+//}
 

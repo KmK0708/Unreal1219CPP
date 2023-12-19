@@ -21,8 +21,6 @@ ARocket::ARocket()
 	BoxComp->SetBoxExtent(FVector(25, 5, 5));	
 	RootComponent = BoxComp;
 
-	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &ARocket::OnBeginOverlap);
-
 	RocketMesh = CreateDefaultSubobject<UStaticMeshComponent>("RocketMesh");
 	RocketMesh->SetupAttachment(BoxComp);
 	RocketMesh->AddLocalRotation(FRotator(0, 270, 90));	//(Pitch=0.000000,Yaw=270.000000,Roll=90.000000)
@@ -57,6 +55,9 @@ void ARocket::BeginPlay()
 	Super::BeginPlay();
 	
 	SetLifeSpan(3.0f);
+
+	OnActorBeginOverlap.AddDynamic(this, &ARocket::OnProcessOverlap);
+	BoxComp->OnComponentBeginOverlap.AddDynamic(this, &ARocket::OnBeginOverlap);
 }
 
 // Called every frame
@@ -73,12 +74,12 @@ void ARocket::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 {
 	UE_LOG(LogTemp, Warning, TEXT("%s"), *OtherActor->GetName());
 	
-	AP38Filght* P38 = Cast<AP38Filght>(OtherActor);
-	// otheractor가 자기자신이 아니라면
-if (OtherActor != this && OtherActor != P38)
-	{
-		Explode();
-	}
+	//AP38Filght* P38 = Cast<AP38Filght>(OtherActor);
+	//// otheractor가 자기자신이 아니라면
+	//if (OtherActor != this && OtherActor != P38)
+	//{
+	//	Explode();
+	//}
 
 }
 
@@ -91,6 +92,18 @@ void ARocket::Explode()
 	UGameplayStatics::PlaySoundAtLocation(GetWorld(), ExplosionSound, GetActorLocation());
 	UE_LOG(LogTemp, Warning, TEXT("boom"));
 	Destroy();
+}
+
+void ARocket::OnProcessOverlap(AActor* OverlappedActor, AActor* OtherActor)
+{
+	UE_LOG(LogTemp, Warning, TEXT("actoractor"));
+	AP38Filght* P38 = Cast<AP38Filght>(OtherActor);
+	// otheractor가 자기자신이 아니라면
+	if (OtherActor != this && OtherActor != P38)
+	{
+		Explode();
+	}
+
 }
 
 

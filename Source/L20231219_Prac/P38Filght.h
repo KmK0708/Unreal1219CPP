@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+
+#include "InputActionValue.h"
+
 #include "P38Filght.generated.h"
 
 class UBoxComponent;
@@ -13,6 +16,9 @@ class UCameraComponent;
 class USceneComponent;
 class UArrowComponent;
 class UFloatingPawnMovement;
+class UInputMappingContext;
+class UInputAction;
+class ARocket;
 
 UCLASS()
 class L20231219_PRAC_API AP38Filght : public APawn
@@ -60,10 +66,23 @@ public:
 	UPROPERTY(VisibleAnyWhere, BlueprintReadOnly, Category = "Movement")
 	UFloatingPawnMovement* Movement;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Data")
+	TSubclassOf<ARocket> RocketTemplate;
+
+public:
+// 향상된 입력
+	// 플레이어 인풋 맵핑컨텍스트
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
+	class UInputMappingContext* IMC_Main;
+	// 인풋 액션
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<class UInputAction> Pitch_RollAction;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<class UInputAction> FireAction;
+
 // 비행체의 움직임
-	void Fire();
+	void Fire(const FInputActionValue& Value);
 
-	void Pitch(float Value);
+	void Pitch_Roll(const FInputActionValue& Value);
 
-	void Roll(float Value);
 };
